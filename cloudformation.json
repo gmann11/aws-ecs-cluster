@@ -578,7 +578,7 @@
         }
       }
     },
-    "SeccurityGroupNeo4jEnterprise": {
+    "SecurityGroupNeo4jEnterprise": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "VpcId": {
@@ -724,7 +724,7 @@
           "AwsvpcConfiguration": {
             "AssignPublicIp": "ENABLED",
             "SecurityGroups": [
-              { "Ref": "SeccurityGroupNeo4jEnterprise" }
+              { "Ref": "SecurityGroupNeo4jEnterprise" }
             ],
             "Subnets": [
               { "Ref": "Subnet0" },
@@ -733,7 +733,7 @@
           }
         },
         "DesiredCount": 1,
-        "TaskDefinition": { "Ref": "Neo4jInstanceTask" },
+        "TaskDefinition": { "Ref": "Neo4jInstanceTask1" },
         "ServiceRegistries": [
           {
             "RegistryArn": {
@@ -757,7 +757,7 @@
           "AwsvpcConfiguration": {
             "AssignPublicIp": "ENABLED",
             "SecurityGroups": [
-              { "Ref": "SeccurityGroupNeo4jEnterprise" }
+              { "Ref": "SecurityGroupNeo4jEnterprise" }
             ],
             "Subnets": [
               { "Ref": "Subnet0" },
@@ -766,7 +766,7 @@
           }
         },
         "DesiredCount": 1,
-        "TaskDefinition": { "Ref": "Neo4jInstanceTask" },
+        "TaskDefinition": { "Ref": "Neo4jInstanceTask2" },
         "ServiceRegistries": [
           {
             "RegistryArn": {
@@ -790,7 +790,7 @@
           "AwsvpcConfiguration": {
             "AssignPublicIp": "ENABLED",
             "SecurityGroups": [
-              { "Ref": "SeccurityGroupNeo4jEnterprise" }
+              { "Ref": "SecurityGroupNeo4jEnterprise" }
             ],
             "Subnets": [
               { "Ref": "Subnet0" },
@@ -799,7 +799,7 @@
           }
         },
         "DesiredCount": 1,
-        "TaskDefinition": { "Ref": "Neo4jInstanceTask" },
+        "TaskDefinition": { "Ref": "Neo4jInstanceTask3" },
         "ServiceRegistries": [
           {
             "RegistryArn": {
@@ -813,7 +813,7 @@
         ]
       }
     },
-    "Neo4jInstanceTask": {
+    "Neo4jInstanceTask1": {
       "Type": "AWS::ECS::TaskDefinition",
       "Properties": {
         "Family": { "Fn::Sub": "${AWS::StackName}-instance" },
@@ -874,12 +874,206 @@
                 "Value": "CORE"
               },
               {
-                "Name": "NEO4J_causal__clustering_expected__core__cluster__size",
+                "Name": "NEO4J_causal__clustering_minimum__core__cluster__size__at__runtime",
+                "Value": "2"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_minimum__core__cluster__size__at__formation",
                 "Value": "3"
               },
               {
                 "Name": "NEO4J_causal__clustering_initial__discovery__members",
                 "Value": "core1.neo4jcluster:5000,core2.neo4jcluster:5000,core3.neo4jcluster:5000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_transaction__advertised__address",
+                "Value": "core1.neo4jcluster:6000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_discovery__advertised__address",
+                "Value": "core1.neo4jcluster:5000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_raft__advertised__address",
+                "Value": "core1.neo4jcluster:7000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "Neo4jInstanceTask2": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "Family": { "Fn::Sub": "${AWS::StackName}-instance" },
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "ExecutionRoleArn": { "Ref" : "ExecutionRole" },
+        "TaskRoleArn": { "Ref": "TaskRole" },
+        "Cpu": 256,
+        "Memory": 1024,
+        "ContainerDefinitions": [
+          {
+            "Name": "Neo4jContainerNode",
+            "Essential": "true",
+            "Privileged": "false",
+            "Image": { "Ref": "DockerImage" },
+            "MemoryReservation": { "Ref": "MemoryMB" },
+            "Cpu": { "Ref": "CpuCapacity" },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": "awslogs-neo4j",
+                "awslogs-region": "us-east-1",
+                "awslogs-stream-prefix": "ecs-neo4j"
+              }
+            },
+            "Ulimits": [
+              {
+                "Name": "nofile",
+                "SoftLimit": 40000,
+                "HardLimit": 40000
+              }
+            ],
+            "Environment": [
+              {
+                "Name": "NEO4J_dbms_memory_heap_max__size",
+                "Value": { "Ref": "Neo4jJavaHeap" }
+              },
+              {
+                "Name": "NEO4J_dbms_memory_heap_initial__size",
+                "Value": { "Ref": "Neo4jJavaHeap" }
+              },
+              {
+                "Name": "NEO4J_dbms_memory_pagecache_size",
+                "Value": { "Ref": "Neo4jPageCache" }
+              },
+              {
+                "Name": "NEO4J_AUTH",
+                "Value": { "Fn::Join": [ "/" , ["neo4j", { "Ref": "Password" } ] ] }
+              },
+              {
+                "Name": "NEO4J_ACCEPT_LICENSE_AGREEMENT",
+                "Value": "yes"
+              },
+              {
+                "Name": "NEO4J_dbms_mode",
+                "Value": "CORE"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_minimum__core__cluster__size__at__runtime",
+                "Value": "2"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_minimum__core__cluster__size__at__formation",
+                "Value": "3"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_initial__discovery__members",
+                "Value": "core1.neo4jcluster:5000,core2.neo4jcluster:5000,core3.neo4jcluster:5000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_transaction__advertised__address",
+                "Value": "core2.neo4jcluster:6000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_discovery__advertised__address",
+                "Value": "core2.neo4jcluster:5000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_raft__advertised__address",
+                "Value": "core2.neo4jcluster:7000"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "Neo4jInstanceTask3": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "Family": { "Fn::Sub": "${AWS::StackName}-instance" },
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "ExecutionRoleArn": { "Ref" : "ExecutionRole" },
+        "TaskRoleArn": { "Ref": "TaskRole" },
+        "Cpu": 256,
+        "Memory": 1024,
+        "ContainerDefinitions": [
+          {
+            "Name": "Neo4jContainerNode",
+            "Essential": "true",
+            "Privileged": "false",
+            "Image": { "Ref": "DockerImage" },
+            "MemoryReservation": { "Ref": "MemoryMB" },
+            "Cpu": { "Ref": "CpuCapacity" },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": "awslogs-neo4j",
+                "awslogs-region": "us-east-1",
+                "awslogs-stream-prefix": "ecs-neo4j"
+              }
+            },
+            "Ulimits": [
+              {
+                "Name": "nofile",
+                "SoftLimit": 40000,
+                "HardLimit": 40000
+              }
+            ],
+            "Environment": [
+              {
+                "Name": "NEO4J_dbms_memory_heap_max__size",
+                "Value": { "Ref": "Neo4jJavaHeap" }
+              },
+              {
+                "Name": "NEO4J_dbms_memory_heap_initial__size",
+                "Value": { "Ref": "Neo4jJavaHeap" }
+              },
+              {
+                "Name": "NEO4J_dbms_memory_pagecache_size",
+                "Value": { "Ref": "Neo4jPageCache" }
+              },
+              {
+                "Name": "NEO4J_AUTH",
+                "Value": { "Fn::Join": [ "/" , ["neo4j", { "Ref": "Password" } ] ] }
+              },
+              {
+                "Name": "NEO4J_ACCEPT_LICENSE_AGREEMENT",
+                "Value": "yes"
+              },
+              {
+                "Name": "NEO4J_dbms_mode",
+                "Value": "CORE"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_minimum__core__cluster__size__at__runtime",
+                "Value": "2"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_minimum__core__cluster__size__at__formation",
+                "Value": "3"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_initial__discovery__members",
+                "Value": "core1.neo4jcluster:5000,core2.neo4jcluster:5000,core3.neo4jcluster:5000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_transaction__advertised__address",
+                "Value": "core3.neo4jcluster:6000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_discovery__advertised__address",
+                "Value": "core3.neo4jcluster:5000"
+              },
+              {
+                "Name": "NEO4J_causal__clustering_raft__advertised__address",
+                "Value": "core3.neo4jcluster:7000"
               }
             ]
           }
@@ -921,37 +1115,6 @@
             }
           ]
         }
-      }
-    },
-    "Neo4jExtSecurityGroup": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription": "Neo4j Cluster External Access Security Group",
-        "VpcId": { "Ref": "VPC" }
-      }
-    },
-    "WebInboundRule": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "Properties": {
-        "GroupId": {
-          "Ref": "Neo4jExtSecurityGroup"
-        },
-        "IpProtocol": "tcp",
-        "FromPort": 7473,
-        "ToPort": 7474,
-        "SourceSecurityGroupId": { "Ref": "Neo4jExtSecurityGroup" }
-      }
-    },
-    "BoltInboundRule": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "Properties": {
-        "GroupId": {
-          "Ref": "Neo4jExtSecurityGroup"
-        },
-        "IpProtocol": "tcp",
-        "FromPort": 7687,
-        "ToPort": 7687,
-        "SourceSecurityGroupId": { "Ref": "Neo4jExtSecurityGroup" }
       }
     }
   },
