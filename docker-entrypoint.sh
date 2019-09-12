@@ -2,6 +2,13 @@
 
 cmd="$1"
 
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id/)
+INSTANCE_IP_PRV=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4/)
+INSTANCE_IP_PUB=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4/)
+AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone/)
+REGION="us-east-1"
+
+
 function running_as_root
 {
     test "$(id -u)" = "0"
@@ -227,6 +234,7 @@ unset NEO4J_dbms_txLog_rotation_retentionPolicy NEO4J_UDC_SOURCE \
     NEO4J_causalClustering_raftAdvertisedAddress
 
 # Custom settings for dockerized neo4j
+# overridden by cloudformation
 : ${NEO4J_dbms_tx__log_rotation_retention__policy:=100M size}
 : ${NEO4J_dbms_memory_pagecache_size:=512M}
 : ${NEO4J_wrapper_java_additional:=-Dneo4j.ext.udc.source=docker}
@@ -246,6 +254,7 @@ unset NEO4J_dbms_txLog_rotation_retentionPolicy NEO4J_UDC_SOURCE \
 ## additional settings for ECS
 NEO4J_apoc_export_file_enabled=true
 NEO4J_dbms_security_procedures_unrestricted=apoc.*
+NEO4J_dbms_connectors_default__advertised__address=${INSTANCE_IP_PUB}
 
 if [ -d /conf ]; then
     if secure_mode_enabled; then
